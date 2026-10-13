@@ -69,8 +69,6 @@ class _LifeHubAppState extends State<LifeHubApp> with WidgetsBindingObserver {
         if (!SecurityService.hasPin) return _Gate.pinSetup;
         if (!AuthService.sessionAuthenticated) return _Gate.pinUnlock;
         return _Gate.home;
-      case 'firebase':
-        return AuthService.firebaseUser == null ? _Gate.login : _Gate.home;
       default:
         return _Gate.login;
     }

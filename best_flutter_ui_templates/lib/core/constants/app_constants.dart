@@ -24,7 +24,7 @@ class AppConstants {
   static const String keyUserEmail = 'user_email';
   static const String keyUserPhoto = 'user_photo_path';
   static const String keyUserBio = 'user_bio';
-  static const String keyAuthMode = 'auth_mode'; // 'none' | 'pin' | 'firebase'
+  static const String keyAuthMode = 'auth_mode'; // 'none' | 'pin'
   static const String keyCurrency = 'currency_symbol';
   static const String keyHabitReminderEnabled = 'habit_reminder_enabled';
   static const String keyHabitReminderTime = 'habit_reminder_time'; // 'HH:mm'

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../services/backup_service.dart';
 import '../services/notification_service.dart';
 import '../../features/finance/data/finance_repository.dart';
-import '../../features/auth/services/auth_service.dart';
 
 class RestoreRecoveryScreen extends StatefulWidget {
   const RestoreRecoveryScreen({super.key, required this.onRecovered});
@@ -33,9 +32,6 @@ class _RestoreRecoveryScreenState extends State<RestoreRecoveryScreen> {
       } catch (_) {}
       try {
         await NotificationService.init();
-      } catch (_) {}
-      try {
-        await AuthService.initFirebase();
       } catch (_) {}
       if (mounted) widget.onRecovered();
     } catch (_) {

@@ -19,13 +19,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _createAccount = false;
   bool _busy = false;
   bool _biometricAvailable = false;
   String? _error;
-  String? _info;
 
   @override
   void initState() {
@@ -39,13 +35,6 @@ class _LoginScreenState extends State<LoginScreen> {
         SecurityService.biometricEnabled &&
         await SecurityService.hasEnrolledBiometrics();
     if (mounted) setState(() => _biometricAvailable = available);
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 
   Future<void> _useBiometric() async {
@@ -64,55 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
     if (mounted) setState(() => _busy = false);
-  }
-
-  Future<void> _run(Future<dynamic> Function() action) async {
-    setState(() {
-      _busy = true;
-      _error = null;
-      _info = null;
-    });
-    try {
-      final result = await action();
-      if (!mounted) return;
-      if (result is String) {
-        if (result.startsWith('Verification email sent') ||
-            result.startsWith('Verify your email first')) {
-          setState(() => _info = result);
-        } else {
-          setState(() => _error = result);
-        }
-      } else if (result != null) {
-        widget.onSignedIn();
-      }
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _sendPasswordReset() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      setState(() => _error = 'Enter your email address first.');
-      return;
-    }
-    setState(() {
-      _busy = true;
-      _error = null;
-      _info = null;
-    });
-    try {
-      await AuthService.sendPasswordResetEmail(email);
-      if (mounted) {
-        setState(() => _info = 'Password reset email sent. Check your inbox.');
-      }
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
   }
 
   @override
@@ -147,90 +87,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: LifeHubTheme.subtitle,
                 ),
                 const SizedBox(height: 32),
-                if (AuthService.firebaseReady) ...[
-                  const Text(
-                    'Firebase sign-in authenticates your account only. LifeHub data stays on this device and is not cloud-synced.',
-                    textAlign: TextAlign.center,
-                    style: LifeHubTheme.caption,
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.g_mobiledata, size: 28),
-                      label: const Text('Continue with Google'),
-                      onPressed: _busy
-                          ? null
-                          : () => _run(() => AuthService.signInWithGoogle()),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.lock_outline),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: FilledButton(
-                      onPressed: _busy
-                          ? null
-                          : () => _run(() async {
-                              final error = await AuthService.signInWithEmail(
-                                _emailController.text.trim(),
-                                _passwordController.text,
-                                createAccount: _createAccount,
-                              );
-                              return error ?? true;
-                            }),
-                      child: Text(
-                        _createAccount ? 'Create Account' : 'Sign In',
-                      ),
-                    ),
-                  ),
-                  if (!_createAccount)
-                    TextButton(
-                      onPressed: _busy ? null : _sendPasswordReset,
-                      child: const Text('Forgot password?'),
-                    ),
-                  TextButton(
-                    onPressed: () => setState(() {
-                      _createAccount = !_createAccount;
-                      _info = null;
-                      _error = null;
-                    }),
-                    child: Text(
-                      _createAccount
-                          ? 'Already have an account? Sign in'
-                          : 'No account? Create one',
-                    ),
-                  ),
-                  const Divider(height: 32),
-                ] else ...[
-                  const Text(
-                    'Offline mode — your data stays on this device.',
-                    style: LifeHubTheme.subtitle,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                const Text(
+                  'Offline mode — your data stays on this device.',
+                  style: LifeHubTheme.subtitle,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -257,14 +119,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Use fingerprint',
                       style: TextStyle(color: LifeHubTheme.nearlyDarkBlue),
                     ),
-                  ),
-                ],
-                if (_info != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    _info!,
-                    style: const TextStyle(color: LifeHubTheme.finance),
-                    textAlign: TextAlign.center,
                   ),
                 ],
                 if (_error != null) ...[

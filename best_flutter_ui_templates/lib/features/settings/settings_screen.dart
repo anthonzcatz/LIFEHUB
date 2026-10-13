@@ -223,30 +223,6 @@ class _SettingsScreenState extends State<SettingsScreen>
             onTap: () => _confirmClearData(context),
           ),
           const _Header('Account'),
-          if (AuthService.firebaseReady &&
-              AuthService.firebaseUser != null) ...[
-            ListTile(
-              leading: const Icon(Icons.cloud_outlined),
-              title: Text(AuthService.firebaseUser!.email ?? 'Signed in'),
-              subtitle: const Text(
-                'Authentication only — your data is not cloud-synced.',
-              ),
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.person_remove_outlined,
-                color: Colors.red,
-              ),
-              title: const Text(
-                'Delete account',
-                style: TextStyle(color: Colors.red),
-              ),
-              subtitle: const Text(
-                'Delete the Firebase account and all local LifeHub data',
-              ),
-              onTap: _deleteFirebaseAccount,
-            ),
-          ],
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Sign out', style: TextStyle(color: Colors.red)),
@@ -279,65 +255,6 @@ class _SettingsScreenState extends State<SettingsScreen>
         ],
       ),
     );
-  }
-
-  Future<void> _deleteFirebaseAccount() async {
-    final passwordController = TextEditingController();
-    final requiresPassword = AuthService.emailPasswordUser;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete account and local data?'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'This permanently deletes the Firebase account and removes all LifeHub data stored on this device. Export an encrypted backup first if you need to keep it.',
-            ),
-            if (requiresPassword) ...[
-              const SizedBox(height: 12),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm account password',
-                ),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete account'),
-          ),
-        ],
-      ),
-    );
-    final password = passwordController.text;
-    passwordController.dispose();
-    if (confirmed != true || !mounted) return;
-
-    try {
-      await AuthService.deleteFirebaseAccount(
-        password: requiresPassword ? password : null,
-      );
-      await BackupService.clearAllData();
-      await AuthService.signOut();
-      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Account deletion failed: $e')));
-      }
-    }
   }
 
   Future<String?> _requestBackupPassphrase({required bool confirm}) async {

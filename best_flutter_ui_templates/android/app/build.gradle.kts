@@ -29,7 +29,7 @@ android {
         applicationId = "com.lifehub.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion // required by local_auth, flutter_secure_storage, firebase_auth
+        minSdk = flutter.minSdkVersion // required by local_auth, flutter_secure_storage
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

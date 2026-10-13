@@ -11,7 +11,6 @@ import 'core/services/backup_service.dart';
 import 'core/services/local_db.dart';
 import 'core/services/notification_service.dart';
 import 'core/widgets/restore_recovery_screen.dart';
-import 'features/auth/services/auth_service.dart';
 import 'features/finance/data/finance_repository.dart';
 
 void _registerBundledAssetLicenses() {
@@ -131,9 +130,6 @@ class _LifeHubBootstrapState extends State<_LifeHubBootstrap> {
     } catch (_) {}
     try {
       await NotificationService.init();
-    } catch (_) {}
-    try {
-      await AuthService.initFirebase();
     } catch (_) {}
     if (mounted) setState(() => _ready = true);
   }

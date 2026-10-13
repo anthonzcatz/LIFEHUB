@@ -1,5 +1,5 @@
-/// Abstraction for cloud sync. The app is local-first; a Firebase or
-/// Supabase implementation can be plugged in later (premium feature).
+/// Abstraction for cloud sync. The app is local-first; a cloud
+/// implementation can be plugged in later (premium feature).
 abstract class SyncService {
   bool get isAvailable;
   Future<void> syncAll();
