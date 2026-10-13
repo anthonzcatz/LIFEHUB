@@ -37,8 +37,6 @@ class AuthService {
           as String? ??
       'none';
 
-  static bool get isSignedIn => authMode == 'pin';
-
   // ---------- Local PIN mode ----------
 
   static Future<void> signInLocal() async {
