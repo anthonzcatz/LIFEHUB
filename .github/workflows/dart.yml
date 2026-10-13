@@ -1,0 +1,97 @@
+name: Dart CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  flutter_channel: 'stable' # or: 'dev' or 'beta'
+  flutter_version: '3.38.4'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        # No additional steps needed here; actions/checkout@v4 is already the latest major version.
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.flutter_channel }}
+          flutter-version: ${{ env.flutter_version }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu' # Or 'temurin', 'oracle', etc.
+          java-version: '17'
+      - run: flutter pub get
+        working-directory: best_flutter_ui_templates
+      - name: Format check
+        run: dart format --set-exit-if-changed lib test
+        working-directory: best_flutter_ui_templates
+      - name: Analyze
+        run: flutter analyze
+        working-directory: best_flutter_ui_templates
+      - name: Test
+        run: flutter test
+        working-directory: best_flutter_ui_templates
+      - name: Build debug APK
+        run: flutter build apk --debug
+        working-directory: best_flutter_ui_templates
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifehub-debug-apk
+          path: best_flutter_ui_templates/build/app/outputs/flutter-apk/app-debug.apk
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.flutter_channel }}
+          flutter-version: ${{ env.flutter_version }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu' # Or 'temurin', 'oracle', etc.
+          java-version: '17'
+      - run: flutter pub get
+        working-directory: best_flutter_ui_templates
+      - name: Configure release signing
+        working-directory: best_flutter_ui_templates/android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        run: |
+          if [[ -z "$ANDROID_KEYSTORE_BASE64" || -z "$ANDROID_KEY_ALIAS" || -z "$ANDROID_KEY_PASSWORD" || -z "$ANDROID_STORE_PASSWORD" ]]; then
+            echo "::error::Configure the four Android release signing secrets before creating a v* tag."
+            exit 1
+          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > lifehub-release.jks
+          chmod 600 lifehub-release.jks
+          printf 'keyAlias=%s\nkeyPassword=%s\nstoreFile=../lifehub-release.jks\nstorePassword=%s\n' \
+            "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD" "$ANDROID_STORE_PASSWORD" > key.properties
+          chmod 600 key.properties
+      - name: Build release APK
+        run: flutter build apk --release --build-number "$GITHUB_RUN_NUMBER"
+        working-directory: best_flutter_ui_templates
+      - name: Build Play Store App Bundle
+        run: flutter build appbundle --release --build-number "$GITHUB_RUN_NUMBER"
+        working-directory: best_flutter_ui_templates
+      - name: Upload signed release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifehub-release-${{ github.ref_name }}
+          path: |
+            best_flutter_ui_templates/build/app/outputs/flutter-apk/app-release.apk
+            best_flutter_ui_templates/build/app/outputs/bundle/release/app-release.aab
+      - name: Remove temporary signing files
+        if: always()
+        run: rm -f best_flutter_ui_templates/android/key.properties best_flutter_ui_templates/android/lifehub-release.jks
