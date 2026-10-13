@@ -231,6 +231,17 @@ class SecurityService {
   }
 
   static Future<bool> hasEnrolledBiometrics() async {
+    // local_auth's getAvailableBiometrics() can report an empty list on
+    // MIUI/HyperOS even when fingerprints are enrolled. The native
+    // BiometricManager.canAuthenticate check is authoritative on Android.
+    try {
+      final enrolled = await const MethodChannel(
+        'lifehub/security',
+      ).invokeMethod<bool>('canAuthenticateBiometric');
+      if (enrolled != null) return enrolled;
+    } on PlatformException {
+      // Channel unavailable (e.g. non-Android host) — fall through.
+    }
     try {
       final available = await _localAuth.getAvailableBiometrics();
       return available.isNotEmpty;
