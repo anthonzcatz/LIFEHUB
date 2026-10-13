@@ -16,7 +16,7 @@ import 'savings_screen.dart';
 
 enum FinanceListTypeFilter { all, income, expenses }
 
-enum _DateFilter { thisMonth, day, range, allTime }
+enum _DateFilter { thisWeek, thisMonth, thisYear, day, range, allTime }
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
@@ -108,6 +108,16 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final goals = ref.watch(savingsProvider);
     final now = DateTime.now();
     final (DateTime? start, DateTime? end) = switch (_dateFilter) {
+      _DateFilter.thisWeek => (
+        DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(Duration(days: now.weekday - 1)),
+        DateTime(now.year, now.month, now.day)
+            .subtract(Duration(days: now.weekday - 1))
+            .add(const Duration(days: 7)),
+      ),
       _DateFilter.thisMonth => (
         DateTime(now.year, now.month),
         DateTime(now.year, now.month + 1),
@@ -131,6 +141,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         _customRange?.start,
         _customRange?.end.add(const Duration(days: 1)),
       ),
+      _DateFilter.thisYear => (DateTime(now.year), DateTime(now.year + 1)),
       _DateFilter.allTime => (null, null),
     };
     final selectedType = _selectedType;
@@ -284,11 +295,33 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   child: Row(
                     children: [
                       ChoiceChip(
+                        label: const Text('This week'),
+                        selected: _dateFilter == _DateFilter.thisWeek,
+                        onSelected: (selected) => setState(() {
+                          _dateFilter = selected
+                              ? _DateFilter.thisWeek
+                              : _DateFilter.allTime;
+                          _category = null;
+                        }),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
                         label: const Text('This month'),
                         selected: _dateFilter == _DateFilter.thisMonth,
                         onSelected: (selected) => setState(() {
                           _dateFilter = selected
                               ? _DateFilter.thisMonth
+                              : _DateFilter.allTime;
+                          _category = null;
+                        }),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('This year'),
+                        selected: _dateFilter == _DateFilter.thisYear,
+                        onSelected: (selected) => setState(() {
+                          _dateFilter = selected
+                              ? _DateFilter.thisYear
                               : _DateFilter.allTime;
                           _category = null;
                         }),

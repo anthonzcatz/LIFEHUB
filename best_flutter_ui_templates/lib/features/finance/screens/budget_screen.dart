@@ -7,22 +7,36 @@ import '../../../core/providers/privacy_providers.dart';
 import '../../../core/services/category_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../models/finance_models.dart';
 import '../providers/finance_providers.dart';
 
 /// Budget planner — set a monthly limit per expense category and
-/// see live usage based on this month's transactions.
-class BudgetScreen extends ConsumerWidget {
+/// see live usage based on the selected month's transactions.
+class BudgetScreen extends ConsumerStatefulWidget {
   const BudgetScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BudgetScreen> createState() => _BudgetScreenState();
+}
+
+class _BudgetScreenState extends ConsumerState<BudgetScreen> {
+  late DateTime _month;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _month = DateTime(now.year, now.month);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(hideAmountsProvider);
     final budgets = ref.watch(budgetsProvider);
     ref.watch(transactionsProvider);
-    final now = DateTime.now();
     final spentByCategory = ref
         .read(financeRepositoryProvider)
-        .spentByCategoryForMonth(now.year, now.month);
+        .spentByCategoryForMonth(_month.year, _month.month);
 
     double spent(String category) => spentByCategory[category] ?? 0;
 
@@ -39,81 +53,113 @@ class BudgetScreen extends ConsumerWidget {
         label: const Text('New Budget', style: TextStyle(color: Colors.white)),
         onPressed: () => _showBudgetForm(context, ref),
       ),
-      body: budgets.isEmpty
-          ? const EmptyState(
-              message: 'No budgets yet.\nSet a monthly limit per category.',
-              icon: Icons.account_balance_outlined,
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ).copyWith(bottom: 90),
-              itemCount: budgets.length,
-              itemBuilder: (context, i) {
-                final b = budgets[i];
-                final used = spent(b.category);
-                final pct = (used / b.monthlyLimit).clamp(0.0, 1.0);
-                final over = used > b.monthlyLimit;
-                return Card(
-                  color: LifeHubTheme.white,
-                  elevation: 2,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: 'Previous month',
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () => setState(
+                    () => _month = DateTime(_month.year, _month.month - 1),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                b.category,
-                                style: LifeHubTheme.title,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, size: 20),
-                              onPressed: () => ref
-                                  .read(budgetsProvider.notifier)
-                                  .remove(b.id),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '${Formatters.money(used)} of ${Formatters.money(b.monthlyLimit)}',
-                          style: LifeHubTheme.caption,
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: pct,
-                            minHeight: 8,
-                            backgroundColor: LifeHubTheme.spacer,
-                            valueColor: AlwaysStoppedAnimation(
-                              over ? Colors.red : LifeHubTheme.finance,
-                            ),
-                          ),
-                        ),
-                        if (over)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 6),
-                            child: Text(
-                              'Over budget!',
-                              style: TextStyle(color: Colors.red, fontSize: 12),
-                            ),
-                          ),
-                      ],
-                    ),
+                ),
+                Expanded(
+                  child: Text(
+                    Formatters.monthYear(_month),
+                    textAlign: TextAlign.center,
+                    style: LifeHubTheme.subtitle,
                   ),
-                );
-              },
+                ),
+                IconButton(
+                  tooltip: 'Next month',
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => setState(
+                    () => _month = DateTime(_month.year, _month.month + 1),
+                  ),
+                ),
+              ],
             ),
+          ),
+          Expanded(child: _buildBody(budgets, spent)),
+        ],
+      ),
     );
+  }
+
+  Widget _buildBody(List<BudgetModel> budgets, double Function(String) spent) {
+    return budgets.isEmpty
+        ? const EmptyState(
+            message: 'No budgets yet.\nSet a monthly limit per category.',
+            icon: Icons.account_balance_outlined,
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ).copyWith(bottom: 90),
+            itemCount: budgets.length,
+            itemBuilder: (context, i) {
+              final b = budgets[i];
+              final used = spent(b.category);
+              final pct = (used / b.monthlyLimit).clamp(0.0, 1.0);
+              final over = used > b.monthlyLimit;
+              return Card(
+                color: LifeHubTheme.white,
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(b.category, style: LifeHubTheme.title),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, size: 20),
+                            onPressed: () =>
+                                ref.read(budgetsProvider.notifier).remove(b.id),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '${Formatters.money(used)} of ${Formatters.money(b.monthlyLimit)}',
+                        style: LifeHubTheme.caption,
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          minHeight: 8,
+                          backgroundColor: LifeHubTheme.spacer,
+                          valueColor: AlwaysStoppedAnimation(
+                            over ? Colors.red : LifeHubTheme.finance,
+                          ),
+                        ),
+                      ),
+                      if (over)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 6),
+                          child: Text(
+                            'Over budget!',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
   }
 
   void _showBudgetForm(BuildContext context, WidgetRef ref) {

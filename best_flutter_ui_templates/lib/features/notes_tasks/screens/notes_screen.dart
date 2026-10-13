@@ -18,6 +18,29 @@ class NotesScreen extends ConsumerStatefulWidget {
 class _NotesScreenState extends ConsumerState<NotesScreen> {
   static const _maxVisibleNotes = 100;
   String _query = '';
+  DateTimeRange? _dateRange;
+
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      initialDateRange: _dateRange,
+      helpText: 'Filter notes by updated date range',
+    );
+    if (picked == null) return;
+    setState(() {
+      _dateRange = DateTimeRange(
+        start: DateTime(
+          picked.start.year,
+          picked.start.month,
+          picked.start.day,
+        ),
+        end: DateTime(picked.end.year, picked.end.month, picked.end.day),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +49,15 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     final filteredNotes = notes
         .where(
           (note) =>
-              query.isEmpty ||
-              '${note.title} ${note.content}'.toLowerCase().contains(query),
+              (query.isEmpty ||
+                  '${note.title} ${note.content}'.toLowerCase().contains(
+                    query,
+                  )) &&
+              (_dateRange == null ||
+                  (!note.updatedAt.isBefore(_dateRange!.start) &&
+                      note.updatedAt.isBefore(
+                        _dateRange!.end.add(const Duration(days: 1)),
+                      ))),
         )
         .toList();
     final visibleNotes = filteredNotes.take(_maxVisibleNotes).toList();
@@ -73,8 +103,27 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                     ),
                   ),
                 ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      FilterChip(
+                        label: Text(
+                          _dateRange == null
+                              ? 'Updated range'
+                              : '${Formatters.shortDate(_dateRange!.start)} – ${Formatters.shortDate(_dateRange!.end)}',
+                        ),
+                        selected: _dateRange != null,
+                        onSelected: (selected) => selected
+                            ? _pickDateRange()
+                            : setState(() => _dateRange = null),
+                      ),
+                    ],
+                  ),
+                ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -86,7 +135,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 Expanded(
                   child: filteredNotes.isEmpty
                       ? const EmptyState(
-                          message: 'No notes match your search.',
+                          message: 'No notes match these filters.',
                           icon: Icons.search_off,
                         )
                       : GridView.builder(
