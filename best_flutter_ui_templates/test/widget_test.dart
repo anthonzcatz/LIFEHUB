@@ -170,6 +170,168 @@ void main() {
     expect(find.text('Previous expense'), findsOneWidget);
   });
 
+  testWidgets('finance history supports specific day and custom range', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    await tester.runAsync(() async {
+      final box = Hive.box(AppConstants.transactionsBox);
+      await box.clear();
+      // Drop any stale index so the raw puts below are always scanned.
+      await Hive.box(AppConstants.transactionIndexBox).clear();
+      await box.put(
+        'today',
+        TransactionModel(
+          id: 'today',
+          type: TransactionType.expense,
+          amount: 10,
+          category: 'Today expense',
+          date: now,
+        ).toMap(),
+      );
+      await box.put(
+        'other',
+        TransactionModel(
+          id: 'other',
+          type: TransactionType.expense,
+          amount: 20,
+          category: 'Other day expense',
+          date: now.subtract(const Duration(days: 2)),
+        ).toMap(),
+      );
+      await box.put(
+        'inRange',
+        TransactionModel(
+          id: 'inRange',
+          type: TransactionType.expense,
+          amount: 30,
+          category: 'In range expense',
+          date: DateTime(now.year, now.month - 1, 15),
+        ).toMap(),
+      );
+      await box.put(
+        'outRange',
+        TransactionModel(
+          id: 'outRange',
+          type: TransactionType.expense,
+          amount: 40,
+          category: 'Out of range expense',
+          date: DateTime(now.year, now.month - 1, 25),
+        ).toMap(),
+      );
+    });
+
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: FinanceScreen())),
+    );
+    await tester.pumpAndSettle();
+
+    // Default: current month only.
+    expect(find.text('Today expense'), findsOneWidget);
+    expect(find.text('In range expense'), findsNothing);
+
+    // Specific day: pick today in the date picker.
+    await tester.tap(find.text('Day'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('Today expense'), findsOneWidget);
+    expect(find.text('Other day expense'), findsNothing);
+
+    // Custom range: 10th–20th of last month, entered via input mode.
+    final prevMonth = DateTime(now.year, now.month - 1, 15);
+    final mm = prevMonth.month.toString().padLeft(2, '0');
+    await tester.tap(find.text('Range'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+    final rangeFields = find.descendant(
+      of: find.byType(Dialog),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(rangeFields.first, '$mm/10/${prevMonth.year}');
+    await tester.enterText(rangeFields.last, '$mm/20/${prevMonth.year}');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('In range expense'), findsOneWidget);
+    expect(find.text('Out of range expense'), findsNothing);
+    expect(find.text('Today expense'), findsNothing);
+
+    // All time shows everything.
+    await tester.ensureVisible(find.text('All time'));
+    await tester.tap(find.text('All time'));
+    await tester.pumpAndSettle();
+    expect(find.text('4 matching transactions'), findsOneWidget);
+
+    await tester.runAsync(() => Hive.box(AppConstants.transactionsBox).clear());
+  });
+
+  testWidgets('tasks can be filtered by due-date range', (tester) async {
+    final now = DateTime.now();
+    await tester.runAsync(() async {
+      final box = Hive.box(AppConstants.tasksBox);
+      await box.clear();
+      await box.put(
+        'inRange',
+        TaskModel(
+          id: 'inRange',
+          title: 'Mid-month task',
+          dueDate: DateTime(now.year, now.month - 1, 15),
+          createdAt: now,
+        ).toMap(),
+      );
+      await box.put(
+        'outRange',
+        TaskModel(
+          id: 'outRange',
+          title: 'Late-month task',
+          dueDate: DateTime(now.year, now.month - 1, 25),
+          createdAt: now,
+        ).toMap(),
+      );
+      await box.put(
+        'noDue',
+        TaskModel(id: 'noDue', title: 'Undated task', createdAt: now).toMap(),
+      );
+    });
+
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: TasksScreen())),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Mid-month task'), findsOneWidget);
+    expect(find.text('Undated task'), findsOneWidget);
+
+    final prevMonth = DateTime(now.year, now.month - 1, 15);
+    final mm = prevMonth.month.toString().padLeft(2, '0');
+    await tester.ensureVisible(find.byType(FilterChip));
+    await tester.tap(find.byType(FilterChip));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+    final rangeFields = find.descendant(
+      of: find.byType(Dialog),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(rangeFields.first, '$mm/10/${prevMonth.year}');
+    await tester.enterText(rangeFields.last, '$mm/20/${prevMonth.year}');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mid-month task'), findsOneWidget);
+    expect(find.text('Late-month task'), findsNothing);
+    expect(find.text('Undated task'), findsNothing);
+
+    // Tapping the active chip clears the range.
+    await tester.ensureVisible(find.byType(FilterChip));
+    await tester.tap(find.byType(FilterChip));
+    await tester.pumpAndSettle();
+    expect(find.text('Undated task'), findsOneWidget);
+
+    await tester.runAsync(() => Hive.box(AppConstants.tasksBox).clear());
+  });
+
   testWidgets('report filters aggregate data by transaction type', (
     tester,
   ) async {

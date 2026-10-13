@@ -16,6 +16,8 @@ import 'savings_screen.dart';
 
 enum FinanceListTypeFilter { all, income, expenses }
 
+enum _DateFilter { thisMonth, day, range, allTime }
+
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
 
@@ -30,11 +32,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   String _query = '';
   String? _category;
   FinanceListTypeFilter _type = FinanceListTypeFilter.all;
-  bool _currentMonthOnly = true;
+  _DateFilter _dateFilter = _DateFilter.thisMonth;
+  DateTime? _specificDay;
+  DateTimeRange? _customRange;
 
   bool get _hasActiveFilter =>
       _query.trim().isNotEmpty ||
-      !_currentMonthOnly ||
+      _dateFilter != _DateFilter.thisMonth ||
       _type != FinanceListTypeFilter.all ||
       _category != null;
 
@@ -43,7 +47,50 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       _query = '';
       _category = null;
       _type = FinanceListTypeFilter.all;
-      _currentMonthOnly = true;
+      _dateFilter = _DateFilter.thisMonth;
+      _specificDay = null;
+      _customRange = null;
+    });
+  }
+
+  Future<void> _pickSpecificDay() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _specificDay ?? now,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      helpText: 'Filter transactions on this day',
+    );
+    if (picked == null) return;
+    setState(() {
+      _specificDay = picked;
+      _dateFilter = _DateFilter.day;
+      _category = null;
+    });
+  }
+
+  Future<void> _pickCustomRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      initialDateRange: _customRange,
+      helpText: 'Filter transactions by date range',
+    );
+    if (picked == null) return;
+    setState(() {
+      _customRange = DateTimeRange(
+        start: DateTime(
+          picked.start.year,
+          picked.start.month,
+          picked.start.day,
+        ),
+        end: DateTime(picked.end.year, picked.end.month, picked.end.day),
+      );
+      _dateFilter = _DateFilter.range;
+      _category = null;
     });
   }
 
@@ -60,8 +107,32 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final totals = ref.watch(monthlyTotalsProvider);
     final goals = ref.watch(savingsProvider);
     final now = DateTime.now();
-    final start = _currentMonthOnly ? DateTime(now.year, now.month) : null;
-    final end = _currentMonthOnly ? DateTime(now.year, now.month + 1) : null;
+    final (DateTime? start, DateTime? end) = switch (_dateFilter) {
+      _DateFilter.thisMonth => (
+        DateTime(now.year, now.month),
+        DateTime(now.year, now.month + 1),
+      ),
+      _DateFilter.day =>
+        _specificDay == null
+            ? (null, null)
+            : (
+                DateTime(
+                  _specificDay!.year,
+                  _specificDay!.month,
+                  _specificDay!.day,
+                ),
+                DateTime(
+                  _specificDay!.year,
+                  _specificDay!.month,
+                  _specificDay!.day + 1,
+                ),
+              ),
+      _DateFilter.range => (
+        _customRange?.start,
+        _customRange?.end.add(const Duration(days: 1)),
+      ),
+      _DateFilter.allTime => (null, null),
+    };
     final selectedType = _selectedType;
     final availableCategories = switch (_type) {
       FinanceListTypeFilter.income => CategoryService.incomeCategories(),
@@ -212,11 +283,43 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      FilterChip(
+                      ChoiceChip(
                         label: const Text('This month'),
-                        selected: _currentMonthOnly,
+                        selected: _dateFilter == _DateFilter.thisMonth,
                         onSelected: (selected) => setState(() {
-                          _currentMonthOnly = selected;
+                          _dateFilter = selected
+                              ? _DateFilter.thisMonth
+                              : _DateFilter.allTime;
+                          _category = null;
+                        }),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text(
+                          _dateFilter == _DateFilter.day && _specificDay != null
+                              ? Formatters.shortDate(_specificDay!)
+                              : 'Day',
+                        ),
+                        selected: _dateFilter == _DateFilter.day,
+                        onSelected: (_) => _pickSpecificDay(),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text(
+                          _dateFilter == _DateFilter.range &&
+                                  _customRange != null
+                              ? '${Formatters.shortDate(_customRange!.start)} – ${Formatters.shortDate(_customRange!.end)}'
+                              : 'Range',
+                        ),
+                        selected: _dateFilter == _DateFilter.range,
+                        onSelected: (_) => _pickCustomRange(),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('All time'),
+                        selected: _dateFilter == _DateFilter.allTime,
+                        onSelected: (_) => setState(() {
+                          _dateFilter = _DateFilter.allTime;
                           _category = null;
                         }),
                       ),

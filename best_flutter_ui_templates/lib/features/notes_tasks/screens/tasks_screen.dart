@@ -24,6 +24,29 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   static const _maxVisibleTasks = 100;
   String _query = '';
   _TaskFilter _filter = _TaskFilter.all;
+  DateTimeRange? _dueRange;
+
+  Future<void> _pickDueRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(now.year + 5),
+      initialDateRange: _dueRange,
+      helpText: 'Filter tasks by due date range',
+    );
+    if (picked == null) return;
+    setState(() {
+      _dueRange = DateTimeRange(
+        start: DateTime(
+          picked.start.year,
+          picked.start.month,
+          picked.start.day,
+        ),
+        end: DateTime(picked.end.year, picked.end.month, picked.end.day),
+      );
+    });
+  }
 
   String _filterLabel(_TaskFilter filter) => switch (filter) {
     _TaskFilter.all => 'All',
@@ -49,7 +72,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               task.dueDate != null &&
               task.dueDate!.isBefore(DateTime.now()),
       };
-      return queryMatches && filterMatches;
+      final dueMatches =
+          _dueRange == null ||
+          (task.dueDate != null &&
+              !task.dueDate!.isBefore(_dueRange!.start) &&
+              task.dueDate!.isBefore(
+                _dueRange!.end.add(const Duration(days: 1)),
+              ));
+      return queryMatches && filterMatches && dueMatches;
     }).toList();
     final visibleTasks = filteredTasks.take(_maxVisibleTasks).toList();
 
@@ -115,6 +145,18 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                           onSelected: (_) => setState(() => _filter = filter),
                         ),
                       ],
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: Text(
+                          _dueRange == null
+                              ? 'Due range'
+                              : '${Formatters.shortDate(_dueRange!.start)} – ${Formatters.shortDate(_dueRange!.end)}',
+                        ),
+                        selected: _dueRange != null,
+                        onSelected: (selected) => selected
+                            ? _pickDueRange()
+                            : setState(() => _dueRange = null),
+                      ),
                     ],
                   ),
                 ),

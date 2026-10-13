@@ -126,23 +126,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ? const EmptyState(
                             message: 'No tasks due today. Enjoy your day!',
                           )
-                        : Column(
-                            children: tasks
-                                .take(4)
-                                .map(
-                                  (t) => CheckboxListTile(
-                                    dense: true,
-                                    title: Text(t.title),
-                                    subtitle: t.priority != 'Medium'
-                                        ? Text('Priority: ${t.priority}')
-                                        : null,
-                                    value: t.isDone,
-                                    onChanged: (_) => ref
-                                        .read(tasksProvider.notifier)
-                                        .toggle(t),
-                                  ),
-                                )
-                                .toList(),
+                        : Material(
+                            color: Colors.transparent,
+                            child: Column(
+                              children: tasks
+                                  .take(4)
+                                  .map(
+                                    (t) => CheckboxListTile(
+                                      dense: true,
+                                      title: Text(t.title),
+                                      subtitle: t.priority != 'Medium'
+                                          ? Text('Priority: ${t.priority}')
+                                          : null,
+                                      value: t.isDone,
+                                      onChanged: (_) => ref
+                                          .read(tasksProvider.notifier)
+                                          .toggle(t),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
                           ),
                   ),
                 ),
