@@ -20,6 +20,8 @@ pluginManagement {
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "8.11.1" apply false
+    // Declared but not applied: Built-in Kotlin uses this version as the
+    // Kotlin toolchain for the app and plugins.
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false
 }
 

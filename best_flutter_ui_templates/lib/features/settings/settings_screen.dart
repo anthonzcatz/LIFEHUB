@@ -452,7 +452,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
-    final path = picked?.files.single.path;
+    final path = picked.isEmpty ? null : picked.single.path;
     if (path == null || !mounted) return;
 
     setState(() => _backupBusy = true);
