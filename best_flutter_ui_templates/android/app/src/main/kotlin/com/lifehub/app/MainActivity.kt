@@ -28,6 +28,29 @@ class MainActivity : FlutterFragmentActivity() {
                             result.success(false)
                         }
                     }
+                    "appVersion" -> {
+                        try {
+                            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                packageManager.getPackageInfo(
+                                    packageName,
+                                    android.content.pm.PackageManager.PackageInfoFlags.of(0),
+                                )
+                            } else {
+                                @Suppress("DEPRECATION")
+                                packageManager.getPackageInfo(packageName, 0)
+                            }
+                            result.success(info.versionName ?: "")
+                        } catch (_: Exception) {
+                            result.success("")
+                        }
+                    }
+                    "localTimezone" -> {
+                        try {
+                            result.success(java.util.TimeZone.getDefault().id)
+                        } catch (_: Exception) {
+                            result.success(null)
+                        }
+                    }
                     "openBiometricEnrollment" -> {
                         try {
                             val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -56,8 +56,12 @@ class NotificationService {
     // Use the real device timezone — without this, tz.local defaults to
     // UTC and reminders fire at the wrong time.
     try {
-      final info = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(info.identifier));
+      final tzName = await const MethodChannel(
+        'lifehub/security',
+      ).invokeMethod<String>('localTimezone');
+      if (tzName != null && tzName.isNotEmpty) {
+        tz.setLocalLocation(tz.getLocation(tzName));
+      }
     } catch (_) {
       // Keep default location if the platform lookup fails.
     }
@@ -78,8 +82,8 @@ class NotificationService {
     _initialized = true;
   }
 
-  static int _idFromString(String value) {
-    final digest = sha256.convert(utf8.encode(value)).bytes;
+  static Future<int> _idFromString(String value) async {
+    final digest = (await Sha256().hash(utf8.encode(value))).bytes;
     final id =
         ((digest[0] << 24) | (digest[1] << 16) | (digest[2] << 8) | digest[3]) &
         0x7FFFFFFF;
@@ -150,7 +154,7 @@ class NotificationService {
       }
       final mode = await _scheduleMode();
       await _plugin.zonedSchedule(
-        _idFromString(id),
+        await _idFromString(id),
         title,
         body,
         tz.TZDateTime.from(when, tz.local),
@@ -191,7 +195,7 @@ class NotificationService {
       if (!when.isAfter(now)) when = when.add(const Duration(days: 1));
       final mode = await _scheduleMode();
       await _plugin.zonedSchedule(
-        _idFromString(id),
+        await _idFromString(id),
         title,
         body,
         tz.TZDateTime.from(when, tz.local),
@@ -231,7 +235,7 @@ class NotificationService {
   static Future<void> cancel(String id) async {
     try {
       if (!_initialized) await init();
-      await _plugin.cancel(_idFromString(id));
+      await _plugin.cancel(await _idFromString(id));
     } catch (_) {}
   }
 

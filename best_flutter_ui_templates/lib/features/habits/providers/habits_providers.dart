@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
+import '../../../core/utils/id_utils.dart';
 
 import '../data/habits_repository.dart';
 import '../models/habit.dart';
@@ -22,7 +22,7 @@ class HabitsNotifier extends Notifier<List<HabitModel>> {
         .read(habitsRepositoryProvider)
         .saveHabit(
           HabitModel(
-            id: const Uuid().v4(),
+            id: newId(),
             name: name,
             icon: icon,
             colorValue: colorValue,

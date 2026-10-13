@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
+import '../../../core/utils/id_utils.dart';
 
 import '../data/finance_repository.dart';
 import '../models/finance_models.dart';
@@ -22,7 +22,7 @@ class TransactionsNotifier extends Notifier<int> {
     required DateTime date,
   }) async {
     final transaction = TransactionModel(
-      id: const Uuid().v4(),
+      id: newId(),
       type: type,
       amount: amount,
       category: category,
@@ -127,7 +127,7 @@ class BudgetsNotifier extends Notifier<List<BudgetModel>> {
         .read(financeRepositoryProvider)
         .saveBudget(
           BudgetModel(
-            id: id ?? const Uuid().v4(),
+            id: id ?? newId(),
             category: normalizedCategory,
             monthlyLimit: limit,
           ),
@@ -159,7 +159,7 @@ class SavingsNotifier extends Notifier<List<SavingsGoalModel>> {
         .read(financeRepositoryProvider)
         .saveSavingsGoal(
           SavingsGoalModel(
-            id: const Uuid().v4(),
+            id: newId(),
             name: name,
             targetAmount: target,
             deadline: deadline,
@@ -199,7 +199,7 @@ class SavingsNotifier extends Notifier<List<SavingsGoalModel>> {
       throw StateError('Savings history and current balance need review.');
     }
     final deposit = SavingsDepositModel(
-      id: const Uuid().v4(),
+      id: newId(),
       amount: amount,
       date: date ?? DateTime.now(),
       note: note,

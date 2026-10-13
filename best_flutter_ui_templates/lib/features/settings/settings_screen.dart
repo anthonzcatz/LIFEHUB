@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../app/lifehub_theme.dart';
 import '../../core/constants/app_constants.dart';
@@ -47,8 +47,12 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Future<void> _loadAppVersion() async {
     try {
-      final info = await PackageInfo.fromPlatform();
-      if (mounted) setState(() => _appVersion = info.version);
+      final version = await const MethodChannel(
+        'lifehub/security',
+      ).invokeMethod<String>('appVersion');
+      if (mounted && version != null && version.isNotEmpty) {
+        setState(() => _appVersion = version);
+      }
     } catch (_) {
       if (mounted) setState(() => _appVersion = 'unknown');
     }

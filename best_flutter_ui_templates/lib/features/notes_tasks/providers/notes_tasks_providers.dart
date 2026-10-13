@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
+import '../../../core/utils/id_utils.dart';
 
 import '../../../core/services/notification_service.dart';
 import '../data/notes_tasks_repository.dart';
@@ -24,7 +24,7 @@ class NotesNotifier extends Notifier<List<NoteModel>> {
         .read(notesTasksRepositoryProvider)
         .saveNote(
           NoteModel(
-            id: id ?? const Uuid().v4(),
+            id: id ?? newId(),
             title: title,
             content: content,
             colorIndex: colorIndex,
@@ -65,7 +65,7 @@ class TasksNotifier extends Notifier<List<TaskModel>> {
         .read(notesTasksRepositoryProvider)
         .saveTask(
           TaskModel(
-            id: const Uuid().v4(),
+            id: newId(),
             title: title,
             priority: priority,
             dueDate: dueDate,

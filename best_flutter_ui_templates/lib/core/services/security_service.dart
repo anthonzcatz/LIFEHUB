@@ -1,15 +1,14 @@
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:cryptography/helpers.dart'
     show constantTimeBytesEquality, randomBytes;
-import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../constants/app_constants.dart';
+import 'aes_cipher.dart';
 import 'local_db.dart';
 
 enum PinAttemptStatus { success, rejected, locked }
@@ -41,8 +40,10 @@ class SecurityService {
   static bool get hasPin =>
       LocalDb.settings.get(AppConstants.keyPinHash) != null;
 
-  static String _hashPin(String pin, String salt) =>
-      sha256.convert(utf8.encode('$salt::$pin')).toString();
+  static Future<String> _hashPin(String pin, String salt) async {
+    final digest = await Sha256().hash(utf8.encode('$salt::$pin'));
+    return digest.bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
 
   static Future<List<int>> _derivePinHash(String pin, List<int> salt) async =>
       (await Argon2id(
@@ -94,7 +95,7 @@ class SecurityService {
     } else {
       final salt = LocalDb.settings.get(AppConstants.keyPinSalt) as String?;
       if (salt != null) {
-        final actual = ascii.encode(_hashPin(pin, salt));
+        final actual = ascii.encode(await _hashPin(pin, salt));
         final expected = ascii.encode(hash);
         verified = constantTimeBytesEquality.equals(actual, expected);
         migrateLegacy = verified;
@@ -168,7 +169,8 @@ class SecurityService {
     await _secureStorage.delete(key: _vaultKeyStorageKey);
   }
 
-  static Future<String> vaultKeyForBackup() async => (await _vaultKey()).base64;
+  static Future<String> vaultKeyForBackup() async =>
+      base64Encode(await _vaultKey());
 
   static Future<String?> existingVaultKey() =>
       _secureStorage.read(key: _vaultKeyStorageKey);
@@ -178,9 +180,12 @@ class SecurityService {
       await clearVaultKey();
       return;
     }
-    final key = enc.Key.fromBase64(encodedKey);
+    final key = base64Decode(encodedKey);
     if (key.length != 32) throw const FormatException('Invalid vault key');
-    await _secureStorage.write(key: _vaultKeyStorageKey, value: key.base64);
+    await _secureStorage.write(
+      key: _vaultKeyStorageKey,
+      value: base64Encode(key),
+    );
   }
 
   static Future<void> verifyVaultCiphertextWithKey(
@@ -190,14 +195,15 @@ class SecurityService {
     if (stored.isEmpty) return;
     final parts = stored.split(':');
     if (parts.length != 3 || parts[0] != 'gcm') return;
-    final key = enc.Key.fromBase64(encodedKey);
-    final iv = enc.IV.fromBase64(parts[1]);
-    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm));
-    encrypter.decrypt64(parts[2], iv: iv);
+    await AesCipher.decryptGcm64(
+      parts[2],
+      base64Decode(encodedKey),
+      base64Decode(parts[1]),
+    );
   }
 
   static Future<String> createRestoreJournalKey() async {
-    final key = enc.Key.fromSecureRandom(32).base64;
+    final key = base64Encode(AesCipher.randomKey());
     await _secureStorage.write(key: _restoreJournalStorageKey, value: key);
     return key;
   }
@@ -277,22 +283,21 @@ class SecurityService {
 
   // ---------- Vault encryption ----------
 
-  static Future<enc.Key> _vaultKey() async {
+  static Future<List<int>> _vaultKey() async {
     var stored = await _secureStorage.read(key: _vaultKeyStorageKey);
     if (stored == null) {
-      final key = enc.Key.fromSecureRandom(32);
-      stored = key.base64;
+      final key = AesCipher.randomKey();
+      stored = base64Encode(key);
       await _secureStorage.write(key: _vaultKeyStorageKey, value: stored);
     }
-    return enc.Key.fromBase64(stored);
+    return base64Decode(stored);
   }
 
   static Future<String> encryptText(String plainText) async {
     final key = await _vaultKey();
-    final iv = enc.IV.fromSecureRandom(12);
-    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm));
-    final encrypted = encrypter.encrypt(plainText, iv: iv);
-    return 'gcm:${iv.base64}:${encrypted.base64}';
+    final iv = AesCipher.randomIv();
+    final data = await AesCipher.encryptGcm64(utf8.encode(plainText), key, iv);
+    return 'gcm:${base64Encode(iv)}:$data';
   }
 
   /// Returns null when the value cannot be decrypted — e.g. a backup
@@ -302,14 +307,10 @@ class SecurityService {
       final parts = stored.split(':');
       final key = await _vaultKey();
       if (parts.length == 3 && parts[0] == 'gcm') {
-        final iv = enc.IV.fromBase64(parts[1]);
-        final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.gcm));
-        return encrypter.decrypt64(parts[2], iv: iv);
+        return AesCipher.decryptGcm64(parts[2], key, base64Decode(parts[1]));
       }
       if (parts.length == 2) {
-        final iv = enc.IV.fromBase64(parts[0]);
-        final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
-        return encrypter.decrypt64(parts[1], iv: iv);
+        return AesCipher.decryptCbc64(parts[1], key, base64Decode(parts[0]));
       }
     } catch (_) {
       // Wrong key or corrupt ciphertext.

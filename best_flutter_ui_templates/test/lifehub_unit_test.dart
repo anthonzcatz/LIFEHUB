@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:crypto/crypto.dart';
+import 'package:cryptography/cryptography.dart';
 import 'package:lifehub/core/constants/app_constants.dart';
 import 'package:lifehub/core/services/local_db.dart';
 import 'package:lifehub/core/services/security_service.dart';
@@ -43,7 +43,9 @@ void main() {
     await LocalDb.settings.put(AppConstants.keyPinSalt, salt);
     await LocalDb.settings.put(
       AppConstants.keyPinHash,
-      sha256.convert(utf8.encode('$salt::4826')).toString(),
+      (await Sha256().hash(
+        utf8.encode('$salt::4826'),
+      )).bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
     );
 
     expect(await SecurityService.verifyPin('4826'), isTrue);

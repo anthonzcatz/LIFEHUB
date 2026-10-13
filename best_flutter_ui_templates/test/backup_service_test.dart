@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:encrypt/encrypt.dart' as enc;
+import 'package:lifehub/core/services/aes_cipher.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:lifehub/core/constants/app_constants.dart';
@@ -75,7 +75,10 @@ void main() {
     ]) {
       await Hive.openBox(name);
     }
-    encryptedBytes = await BackupCrypto.encryptJson(_payload(), _passphrase);
+    encryptedBytes = await BackupCrypto.encryptJson(
+      await _payload(),
+      _passphrase,
+    );
   });
 
   setUp(() async {
@@ -271,7 +274,7 @@ void main() {
   test(
     'invalid records are rejected before live collections are changed',
     () async {
-      final invalid = _payload();
+      final invalid = await _payload();
       final transactions = Map<String, dynamic>.from(
         (invalid['data'] as Map)[AppConstants.transactionsBox] as Map,
       );
@@ -303,7 +306,7 @@ void main() {
         'version': 1,
         'exportedAt': DateTime(2026, 1, 1).toIso8601String(),
         'settings': {AppConstants.keyCurrency: '₱'},
-        'data': _payload()['data'],
+        'data': (await _payload())['data'],
       };
       await backupFile.writeAsString(jsonEncode(legacy));
 
@@ -317,13 +320,15 @@ void main() {
   );
 }
 
-Map<String, dynamic> _payload() {
+Future<Map<String, dynamic>> _payload() async {
   const vaultId = 'email';
-  final key = enc.Key.fromBase64(_backupVaultKey);
-  final iv = enc.IV.fromSecureRandom(12);
-  final encryptedPassword = enc.Encrypter(
-    enc.AES(key, mode: enc.AESMode.gcm),
-  ).encrypt('secret-value', iv: iv);
+  final key = base64Decode(_backupVaultKey);
+  final iv = AesCipher.randomIv();
+  final encryptedPassword = await AesCipher.encryptGcm64(
+    utf8.encode('secret-value'),
+    key,
+    iv,
+  );
   final transaction = TransactionModel(
     id: 'income',
     type: TransactionType.income,
@@ -334,7 +339,7 @@ Map<String, dynamic> _payload() {
   final vault = VaultEntry(
     id: vaultId,
     title: 'Email',
-    encryptedPassword: 'gcm:${iv.base64}:${encryptedPassword.base64}',
+    encryptedPassword: 'gcm:${base64Encode(iv)}:$encryptedPassword',
     updatedAt: DateTime(2026, 1, 2),
   );
   return {

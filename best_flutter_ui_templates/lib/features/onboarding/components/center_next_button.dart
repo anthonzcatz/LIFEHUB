@@ -1,4 +1,3 @@
-import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import '../../../app/lifehub_theme.dart';
 
@@ -75,23 +74,21 @@ class CenterNextButton extends StatelessWidget {
                     ),
                     color: LifeHubTheme.nearlyDarkBlue,
                   ),
-                  child: PageTransitionSwitcher(
+                  child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 480),
-                    reverse: signUpMoveAnimation.value < 0.7,
-                    transitionBuilder:
-                        (
-                          Widget child,
-                          Animation<double> animation,
-                          Animation<double> secondaryAnimation,
-                        ) {
-                          return SharedAxisTransition(
-                            fillColor: Colors.transparent,
-                            animation: animation,
-                            secondaryAnimation: secondaryAnimation,
-                            transitionType: SharedAxisTransitionType.vertical,
-                            child: child,
-                          );
-                        },
+                    reverseDuration: const Duration(milliseconds: 480),
+                    switchInCurve: Curves.fastOutSlowIn,
+                    switchOutCurve: Curves.fastOutSlowIn,
+                    transitionBuilder: (child, animation) {
+                      final slide = Tween<Offset>(
+                        begin: const Offset(0, 0.3),
+                        end: Offset.zero,
+                      ).animate(animation);
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(position: slide, child: child),
+                      );
+                    },
                     child: signUpMoveAnimation.value > 0.7
                         ? InkWell(
                             key: const ValueKey('Get Started button'),

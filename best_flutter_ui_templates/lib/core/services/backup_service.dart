@@ -5,8 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:uuid/uuid.dart';
-import 'package:encrypt/encrypt.dart' as enc;
+import '../../../core/utils/id_utils.dart';
 
 import '../../features/finance/data/finance_repository.dart';
 import '../../features/finance/models/finance_models.dart';
@@ -14,6 +13,7 @@ import '../../features/habits/models/habit.dart';
 import '../../features/notes_tasks/models/notes_tasks_models.dart';
 import '../../features/vault/models/vault_entry.dart';
 import '../constants/app_constants.dart';
+import 'aes_cipher.dart';
 import 'backup_crypto.dart';
 import 'local_db.dart';
 import 'notification_service.dart';
@@ -596,7 +596,7 @@ class BackupService {
         final dir = await _supportDirectory();
         final extension = _profilePhotoExtension(prepared.profilePhoto!);
         restoredPhoto = File(
-          '${dir.path}${Platform.pathSeparator}lifehub_profile_restore_${const Uuid().v4()}.$extension',
+          '${dir.path}${Platform.pathSeparator}lifehub_profile_restore_${newId()}.$extension',
         );
         await restoredPhoto.writeAsBytes(prepared.profilePhoto!, flush: true);
         settings[AppConstants.keyUserPhoto] = restoredPhoto.path;
@@ -662,12 +662,10 @@ class BackupService {
         encoded['ciphertext'] is! String) {
       throw const FormatException('Restore recovery journal is damaged.');
     }
-    final encrypter = enc.Encrypter(
-      enc.AES(enc.Key.fromBase64(key), mode: enc.AESMode.gcm),
-    );
-    final snapshotJson = encrypter.decrypt64(
+    final snapshotJson = await AesCipher.decryptGcm64(
       encoded['ciphertext'] as String,
-      iv: enc.IV.fromBase64(encoded['iv'] as String),
+      base64Decode(key),
+      base64Decode(encoded['iv'] as String),
     );
     final snapshot = jsonDecode(snapshotJson);
     if (snapshot is! Map<String, dynamic>) {
@@ -694,12 +692,14 @@ class BackupService {
     final dir = await _supportDirectory();
     final file = File('${dir.path}${Platform.pathSeparator}$_journalFileName');
     final key = await _keyStore.createJournalKey();
-    final iv = enc.IV.fromSecureRandom(12);
-    final encrypted = enc.Encrypter(
-      enc.AES(enc.Key.fromBase64(key), mode: enc.AESMode.gcm),
-    ).encrypt(jsonEncode(snapshot), iv: iv);
+    final iv = AesCipher.randomIv();
+    final data = await AesCipher.encryptGcm64(
+      utf8.encode(jsonEncode(snapshot)),
+      base64Decode(key),
+      iv,
+    );
     await file.writeAsString(
-      jsonEncode({'iv': iv.base64, 'ciphertext': encrypted.base64}),
+      jsonEncode({'iv': base64Encode(iv), 'ciphertext': data}),
       flush: true,
     );
     return file;
