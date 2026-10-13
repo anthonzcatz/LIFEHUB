@@ -122,8 +122,8 @@ class _SettingsScreenState extends State<SettingsScreen>
             leading: const Icon(Icons.fingerprint),
             title: Text(
               _biometricEnrolled
-                  ? 'Fingerprint registered'
-                  : 'Register fingerprint',
+                  ? 'Device fingerprint registered'
+                  : 'Register fingerprint in Android Settings',
             ),
             subtitle: Text(
               !_canBiometric
