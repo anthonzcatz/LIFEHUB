@@ -12,7 +12,7 @@ import '../features/vault/screens/vault_screen.dart';
 import '../features/vault/widgets/vault_gate.dart';
 import 'lifehub_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
+import '../core/services/platform_actions.dart';
 
 /// Animated sidebar drawer, adapted from the original template's
 /// navigation drawer: the main screen slides + scales to the right
@@ -323,11 +323,8 @@ class _DrawerPanel extends StatelessWidget {
                   _slide(
                     _item(Icons.share_outlined, 'Invite Friend', () {
                       onClose();
-                      SharePlus.instance.share(
-                        ShareParams(
-                          text:
-                              'Check out LifeHub — your all-in-one daily organizer!',
-                        ),
+                      PlatformActions.shareText(
+                        'Check out LifeHub — your all-in-one daily organizer!',
                       );
                     }),
                     0.4,

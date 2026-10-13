@@ -1,11 +1,13 @@
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../app/lifehub_theme.dart';
+import '../../../core/services/platform_actions.dart';
 import '../providers/profile_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -55,7 +57,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               title: const Text('Take a photo'),
               onTap: () {
                 Navigator.pop(ctx);
-                _pickImage(ImageSource.camera);
+                _pickImage(camera: true);
               },
             ),
             ListTile(
@@ -63,7 +65,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               title: const Text('Choose from gallery'),
               onTap: () {
                 Navigator.pop(ctx);
-                _pickImage(ImageSource.gallery);
+                _pickImage(camera: false);
               },
             ),
             if (hasPhoto)
@@ -85,20 +87,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickImage({required bool camera}) async {
     try {
-      final picked = await ImagePicker().pickImage(
-        source: source,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
-      );
-      if (picked != null) {
+      final path = camera
+          ? await PlatformActions.capturePhoto()
+          : await PlatformActions.pickImage();
+      if (path != null) {
         // Copy into app documents so the photo survives cache clears.
         final dir = await getApplicationDocumentsDirectory();
-        final saved = await File(picked.path).copy(
-          '${dir.path}/profile_photo${picked.name.contains('.') ? '.${picked.name.split('.').last}' : '.jpg'}',
-        );
+        final resized = await _resizeSquare(File(path), 512);
+        final saved = await resized.copy('${dir.path}/profile_photo.png');
         ref.read(profileProvider.notifier).update(photoPath: saved.path);
       }
     } catch (e) {
@@ -107,6 +105,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text('Could not get image: $e')));
       }
+    }
+  }
+
+  /// Center-crops to a square and downscales to [size] px PNG, so large
+  /// camera shots don't bloat storage. Falls back to the source file
+  /// when decoding fails (e.g. exotic formats).
+  Future<File> _resizeSquare(File source, int size) async {
+    try {
+      final codec = await ui.instantiateImageCodec(await source.readAsBytes());
+      final image = (await codec.getNextFrame()).image;
+      final side = math.min(image.width, image.height).toDouble();
+      final src = Rect.fromCenter(
+        center: Offset(image.width / 2, image.height / 2),
+        width: side,
+        height: side,
+      );
+      final recorder = ui.PictureRecorder();
+      Canvas(recorder).drawImageRect(
+        image,
+        src,
+        Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
+        Paint(),
+      );
+      final png = await (await recorder.endRecording().toImage(
+        size,
+        size,
+      )).toByteData(format: ui.ImageByteFormat.png);
+      if (png == null) return source;
+      final out = File('${source.path}.png');
+      await out.writeAsBytes(png.buffer.asUint8List(), flush: true);
+      return out;
+    } catch (_) {
+      return source;
     }
   }
 

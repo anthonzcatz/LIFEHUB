@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import '../../core/services/backup_service.dart';
 import '../../core/services/backup_crypto.dart';
 import '../../core/services/local_db.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/platform_actions.dart';
 import '../../core/services/security_service.dart';
 import '../../core/widgets/restore_recovery_screen.dart';
 import '../auth/screens/pin_screen.dart';
@@ -369,12 +369,14 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Future<void> _restoreBackup() async {
-    final picked = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-    );
-    final path = picked.isEmpty ? null : picked.single.path;
+    final path = await PlatformActions.pickFile();
     if (path == null || !mounted) return;
+    if (!path.toLowerCase().endsWith('.json')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a .json backup file.')),
+      );
+      return;
+    }
 
     setState(() => _backupBusy = true);
     try {

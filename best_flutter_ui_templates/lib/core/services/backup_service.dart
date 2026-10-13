@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../../core/utils/id_utils.dart';
 
 import '../../features/finance/data/finance_repository.dart';
@@ -17,6 +16,7 @@ import 'aes_cipher.dart';
 import 'backup_crypto.dart';
 import 'local_db.dart';
 import 'notification_service.dart';
+import 'platform_actions.dart';
 import 'security_service.dart';
 
 class BackupPreview {
@@ -191,11 +191,9 @@ class BackupService {
 
   static Future<void> shareBackup({required String passphrase}) async {
     final file = await exportToJson(passphrase: passphrase);
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path)],
-        subject: 'LifeHub encrypted backup',
-      ),
+    await PlatformActions.shareFile(
+      file.path,
+      subject: 'LifeHub encrypted backup',
     );
   }
 
