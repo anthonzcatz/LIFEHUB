@@ -133,19 +133,17 @@ class _SettingsScreenState extends State<SettingsScreen>
               !_canBiometric
                   ? 'No biometric hardware available'
                   : _biometricEnrolled
-                  ? 'Your device fingerprint is ready to use'
+                  ? 'Ready to use — tap to manage fingerprints'
                   : 'Register a fingerprint in Android Settings',
             ),
-            trailing: _canBiometric && !_biometricEnrolled
-                ? const Icon(Icons.open_in_new)
-                : Icon(
-                    _biometricEnrolled
-                        ? Icons.check_circle
-                        : Icons.fingerprint_outlined,
-                  ),
-            onTap: _canBiometric && !_biometricEnrolled
-                ? _registerFingerprint
-                : null,
+            trailing: Icon(
+              _biometricEnrolled
+                  ? Icons.check_circle
+                  : _canBiometric
+                  ? Icons.open_in_new
+                  : Icons.fingerprint_outlined,
+            ),
+            onTap: _canBiometric ? _registerFingerprint : null,
           ),
           SwitchListTile(
             secondary: const Icon(Icons.lock_open_outlined),
