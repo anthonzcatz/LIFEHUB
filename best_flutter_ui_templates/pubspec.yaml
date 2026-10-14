@@ -39,6 +39,7 @@ dependencies:
     path_provider: ^2.1.6
     cryptography: ^2.9.0
     cryptography_flutter: ^2.3.4
+    pdf: ^3.13.1
 
 dev_dependencies:
     flutter_test:

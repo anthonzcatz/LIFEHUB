@@ -11,8 +11,15 @@ class PlatformActions {
   static Future<void> shareText(String text) =>
       _channel.invokeMethod('shareText', {'text': text});
 
-  static Future<void> shareFile(String path, {String? subject}) =>
-      _channel.invokeMethod('shareFile', {'path': path, 'subject': subject});
+  static Future<void> shareFile(
+    String path, {
+    String? subject,
+    String? mimeType,
+  }) => _channel.invokeMethod('shareFile', {
+    'path': path,
+    'subject': subject,
+    'mimeType': mimeType,
+  });
 
   /// Lets the user pick any file; returns a copy path in the cache dir,
   /// or null when cancelled.

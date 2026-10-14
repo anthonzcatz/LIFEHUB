@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/lifehub_theme.dart';
 import '../../../core/providers/privacy_providers.dart';
+import '../../../core/services/platform_actions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
+import '../data/finance_report_pdf.dart';
+import '../data/finance_repository.dart';
 import '../models/finance_models.dart';
 import '../providers/finance_providers.dart';
 
@@ -41,6 +44,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   DateTimeRange? _customRange;
   ReportTypeFilter _type = ReportTypeFilter.all;
   String? _category;
+  bool _exporting = false;
 
   DateTimeRange get _monthRange => DateTimeRange(
     start: DateTime(_anchor.year, _anchor.month),
@@ -205,6 +209,63 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     });
   }
 
+  /// Exports the currently filtered report as a formatted PDF and opens
+  /// the share sheet so it can go to Gmail, Messenger, Drive, etc.
+  Future<void> _exportPdf(
+    FinanceReportSnapshot report,
+    TransactionType? selectedType,
+    String? activeCategory,
+    Map<String, double> byCategory,
+    TransactionType? breakdownType,
+    FinanceReportTotals aggregate,
+  ) async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final repository = ref.read(financeRepositoryProvider);
+      final range = _activeRange;
+      final transactions = <TransactionModel>[];
+      var offset = 0;
+      // Page through the matching transactions; bounded so a huge
+      // history can't stall the UI — the PDF table caps itself anyway.
+      while (transactions.length < 600) {
+        final page = await repository.queryTransactionsPage(
+          start: range.start,
+          end: range.end,
+          type: selectedType,
+          category: activeCategory,
+          limit: 200,
+          offset: offset,
+        );
+        transactions.addAll(page.items);
+        if (!page.hasMore || page.items.isEmpty) break;
+        offset += page.items.length;
+      }
+      final path = await FinanceReportPdf.writeToCache(
+        rangeLabel: _rangeLabel,
+        totals: aggregate,
+        breakdown: byCategory,
+        breakdownType: breakdownType,
+        transactions: transactions,
+        totalMatching: aggregate.matchingCount,
+        currencySymbol: Formatters.currencySymbol,
+      );
+      await PlatformActions.shareFile(
+        path,
+        mimeType: 'application/pdf',
+        subject: 'LifeHub financial report — $_rangeLabel',
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not export the PDF report')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
   List<MapEntry<String, double>> _visibleBreakdown(
     List<MapEntry<String, double>> sorted,
   ) {
@@ -270,6 +331,26 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          IconButton(
+            tooltip: 'Export PDF report',
+            onPressed: report == null || _exporting
+                ? null
+                : () => _exportPdf(
+                    report,
+                    selectedType,
+                    activeCategory,
+                    byCategory,
+                    breakdownType,
+                    aggregate!,
+                  ),
+            icon: _exporting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.picture_as_pdf_outlined),
+          ),
           if (_hasActiveFilter)
             IconButton(
               icon: const Icon(Icons.filter_alt_off_outlined),
