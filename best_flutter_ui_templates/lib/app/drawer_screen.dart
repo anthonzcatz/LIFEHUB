@@ -7,6 +7,7 @@ import '../features/finance/screens/finance_screen.dart';
 import '../features/habits/screens/habits_screen.dart';
 import '../features/notes_tasks/screens/tasks_screen.dart';
 import '../features/profile/providers/profile_provider.dart';
+import '../features/profile/screens/profile_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/vault/screens/vault_screen.dart';
 import '../features/vault/widgets/vault_gate.dart';
@@ -210,51 +211,55 @@ class _DrawerPanel extends StatelessWidget {
             ),
             // Profile header — image scales and slides in like the original.
             _slide(
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    Transform.translate(
-                      offset: Offset(0, 24 * (1 - animValue)),
-                      child: Transform.scale(
-                        scale: 0.72 + (0.28 * animValue),
-                        child: CircleAvatar(
-                          radius: 56,
-                          backgroundColor: LifeHubTheme.white.withValues(
-                            alpha: 0.2,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onGo(const ProfileScreen()),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      Transform.translate(
+                        offset: Offset(0, 24 * (1 - animValue)),
+                        child: Transform.scale(
+                          scale: 0.72 + (0.28 * animValue),
+                          child: CircleAvatar(
+                            radius: 56,
+                            backgroundColor: LifeHubTheme.white.withValues(
+                              alpha: 0.2,
+                            ),
+                            backgroundImage: _avatarImage(profile.photoPath),
+                            child: profile.photoPath == null
+                                ? Text(
+                                    name[0].toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 32,
+                                      color: LifeHubTheme.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
                           ),
-                          backgroundImage: _avatarImage(profile.photoPath),
-                          child: profile.photoPath == null
-                              ? Text(
-                                  name[0].toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 32,
-                                    color: LifeHubTheme.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                              : null,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: LifeHubTheme.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (email.isNotEmpty)
+                      const SizedBox(height: 12),
                       Text(
-                        email,
-                        style: TextStyle(
-                          color: LifeHubTheme.white.withValues(alpha: 0.7),
-                          fontSize: 12,
+                        name,
+                        style: const TextStyle(
+                          color: LifeHubTheme.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                  ],
+                      if (email.isNotEmpty)
+                        Text(
+                          email,
+                          style: TextStyle(
+                            color: LifeHubTheme.white.withValues(alpha: 0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
               0.0,

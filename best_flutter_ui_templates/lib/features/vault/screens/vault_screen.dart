@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/lifehub_theme.dart';
+import '../../../core/utils/clipboard_utils.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
 import '../models/vault_entry.dart';
@@ -182,10 +182,14 @@ class _EntryTileState extends ConsumerState<_EntryTile> {
                       }
                       return;
                     }
-                    await Clipboard.setData(ClipboardData(text: plain));
+                    await ClipboardUtils.copySensitive(plain);
                     if (mounted) {
                       messenger.showSnackBar(
-                        const SnackBar(content: Text('Password copied')),
+                        const SnackBar(
+                          content: Text(
+                            'Password copied — clipboard clears in 60s',
+                          ),
+                        ),
                       );
                     }
                   },

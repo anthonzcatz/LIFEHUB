@@ -29,6 +29,7 @@ class AppConstants {
   static const String keyHabitReminderEnabled = 'habit_reminder_enabled';
   static const String keyHabitReminderTime = 'habit_reminder_time'; // 'HH:mm'
   static const String keyHideAmounts = 'hide_amounts';
+  static const String keyLastBackupAt = 'last_backup_at'; // ISO-8601
 
   static const List<String> expenseCategories = [
     'Food',

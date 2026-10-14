@@ -31,6 +31,10 @@ class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
+  /// Set by the app layer (app.dart) — invoked when the user taps a
+  /// notification; [NotificationResponse.payload] carries the reminder id.
+  static void Function(NotificationResponse response)? onNotificationTap;
+
   static const _reminderChannel = AndroidNotificationDetails(
     'lifehub_reminders',
     'Reminders',
@@ -78,7 +82,11 @@ class NotificationService {
       android: androidSettings,
       iOS: darwinSettings,
     );
-    await _plugin.initialize(initSettings);
+    await _plugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (response) =>
+          onNotificationTap?.call(response),
+    );
     _initialized = true;
   }
 
@@ -162,6 +170,7 @@ class NotificationService {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: mode,
+        payload: id,
       );
       return ReminderScheduleResult(
         mode == AndroidScheduleMode.exactAllowWhileIdle
@@ -204,6 +213,7 @@ class NotificationService {
             UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: mode,
         matchDateTimeComponents: DateTimeComponents.time,
+        payload: id,
       );
       return ReminderScheduleResult(
         mode == AndroidScheduleMode.exactAllowWhileIdle

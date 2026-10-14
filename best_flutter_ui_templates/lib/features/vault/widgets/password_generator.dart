@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../app/lifehub_theme.dart';
+import '../../../core/utils/clipboard_utils.dart';
 
 /// Cryptographically-secure password generator.
 class PasswordGenerator {
@@ -102,7 +102,7 @@ class _GeneratorSheetState extends State<_GeneratorSheet> {
                 IconButton(
                   icon: const Icon(Icons.copy),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: _password));
+                    ClipboardUtils.copySensitive(_password);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Copied to clipboard')),
                     );

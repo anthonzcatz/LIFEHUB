@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/services/local_db.dart';
+import '../core/services/notification_service.dart';
 import '../core/services/security_service.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/services/auth_service.dart';
 import '../features/auth/screens/pin_screen.dart';
+import '../features/habits/screens/habits_screen.dart';
+import '../features/notes_tasks/screens/tasks_screen.dart';
 import '../features/onboarding/animated_onboarding_screen.dart';
 import 'drawer_screen.dart';
 import 'home_shell.dart';
 import 'lifehub_theme.dart';
 
 enum _Gate { onboarding, login, pinSetup, pinUnlock, home }
+
+/// Global navigator key — lets notification taps route into the app.
+final appNavigatorKey = GlobalKey<NavigatorState>();
 
 class LifeHubApp extends StatefulWidget {
   const LifeHubApp({super.key});
@@ -21,7 +28,6 @@ class LifeHubApp extends StatefulWidget {
 }
 
 class _LifeHubAppState extends State<LifeHubApp> with WidgetsBindingObserver {
-  final _navigatorKey = GlobalKey<NavigatorState>();
   bool _obscureForPrivacy = false;
 
   @override
@@ -29,6 +35,7 @@ class _LifeHubAppState extends State<LifeHubApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     AuthService.authRevision.addListener(_refresh);
+    NotificationService.onNotificationTap = _onNotificationTap;
   }
 
   @override
@@ -48,7 +55,7 @@ class _LifeHubAppState extends State<LifeHubApp> with WidgetsBindingObserver {
       setState(() => _obscureForPrivacy = obscure);
     }
     if (state == AppLifecycleState.paused && AuthService.requiresPinOnLaunch) {
-      _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+      appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
       AuthService.lockSession();
     }
   }
@@ -78,11 +85,23 @@ class _LifeHubAppState extends State<LifeHubApp> with WidgetsBindingObserver {
     if (mounted) setState(() {});
   }
 
+  /// Opens the section matching the tapped reminder's payload id.
+  void _onNotificationTap(NotificationResponse response) {
+    final payload = response.payload;
+    final nav = appNavigatorKey.currentState;
+    if (payload == null || nav == null) return;
+    if (payload.startsWith('task_')) {
+      nav.push(MaterialPageRoute(builder: (_) => const TasksScreen()));
+    } else if (payload == 'habit_daily_reminder') {
+      nav.push(MaterialPageRoute(builder: (_) => const HabitsScreen()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'LifeHub',
-      navigatorKey: _navigatorKey,
+      navigatorKey: appNavigatorKey,
       debugShowCheckedModeBanner: false,
       builder: (context, child) => Stack(
         fit: StackFit.expand,

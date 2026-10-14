@@ -12,6 +12,7 @@ import '../../core/services/backup_crypto.dart';
 import '../../core/services/local_db.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/platform_actions.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/services/security_service.dart';
 import '../../core/widgets/restore_recovery_screen.dart';
 import '../auth/screens/pin_screen.dart';
@@ -192,8 +193,10 @@ class _SettingsScreenState extends State<SettingsScreen>
           ListTile(
             leading: const Icon(Icons.upload_outlined),
             title: const Text('Export encrypted backup'),
-            subtitle: const Text(
-              'Create a passphrase-protected portable backup',
+            subtitle: Text(
+              _lastBackupAt() == null
+                  ? 'Create a passphrase-protected portable backup'
+                  : 'Last exported ${Formatters.date(_lastBackupAt()!)}',
             ),
             trailing: _backupBusy
                 ? const SizedBox(
@@ -348,6 +351,10 @@ class _SettingsScreenState extends State<SettingsScreen>
         });
     return result;
   }
+
+  static DateTime? _lastBackupAt() => DateTime.tryParse(
+    LocalDb.settings.get(AppConstants.keyLastBackupAt) as String? ?? '',
+  );
 
   Future<void> _exportBackup() async {
     final passphrase = await _requestBackupPassphrase(confirm: true);

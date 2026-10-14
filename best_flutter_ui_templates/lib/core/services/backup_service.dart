@@ -186,6 +186,10 @@ class BackupService {
     final file = File('${dir.path}${Platform.pathSeparator}$_backupFileName');
     if (await file.exists()) await file.delete();
     await file.writeAsBytes(encrypted, flush: true);
+    await LocalDb.settings.put(
+      AppConstants.keyLastBackupAt,
+      DateTime.now().toIso8601String(),
+    );
     return file;
   }
 
