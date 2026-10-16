@@ -21,6 +21,7 @@ import '../finance/providers/finance_providers.dart';
 import '../habits/providers/habits_providers.dart';
 import '../notes_tasks/providers/notes_tasks_providers.dart';
 import '../profile/providers/profile_provider.dart';
+import 'privacy_policy_screen.dart';
 import '../vault/providers/vault_providers.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -244,6 +245,16 @@ class _SettingsScreenState extends State<SettingsScreen>
             title: const Text('LifeHub'),
             subtitle: Text(
               'Version $_appVersion — All-in-One Personal Organizer',
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('Privacy policy'),
+            subtitle: const Text('No data leaves your device'),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const PrivacyPolicyScreen(),
+              ),
             ),
           ),
           ListTile(
