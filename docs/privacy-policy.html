@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LifeHub Privacy Policy</title>
+<style>
+  body {
+    font-family: -apple-system, Roboto, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    color: #1f2933;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px;
+    background: #f7f9fb;
+  }
+  h1 { color: #3f51b5; margin-bottom: 4px; }
+  h2 { color: #1f2933; margin-top: 28px; font-size: 1.15rem; }
+  .updated { color: #6b7280; font-size: 0.85rem; margin-bottom: 24px; }
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 24px 28px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  th { color: #6b7280; font-size: 0.85rem; }
+  code { background: #eef1f6; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+  strong { color: #1f2933; }
+</style>
+</head>
+<body>
+<div class="card">
+<h1>LifeHub Privacy Policy</h1>
+<p class="updated">Last updated: October 2026</p>
+
+<p>LifeHub ("the app") is an all-in-one personal organizer for Android.
+This policy explains, in plain terms, how the app handles your
+information.</p>
+
+<h2>The short version</h2>
+<p><strong>LifeHub collects no data.</strong> Everything you enter stays
+on your device. There are no accounts, no servers, no analytics, no
+ads, and no tracking. The app works fully offline and does not connect
+to the internet.</p>
+
+<h2>What the app stores, and where</h2>
+<p>All of the following is stored only in the app's private storage on
+your device:</p>
+<ul>
+  <li><strong>Finance data</strong> — transactions, budgets, savings goals</li>
+  <li><strong>Tasks, notes, and habits</strong> — including their reminder schedules</li>
+  <li><strong>Vault entries</strong> — passwords and notes encrypted with
+      AES-256-GCM; the encryption key is held in Android's secure
+      keystore, not on disk in plain text</li>
+  <li><strong>Security settings</strong> — your unlock PIN, stored only as
+      an Argon2id hash, and your biometric-unlock preference</li>
+  <li><strong>Backups</strong> — optional, encrypted with AES-256-GCM
+      using a passphrase you choose; the file is created only when you
+      tap "Export backup" and goes only where you send it</li>
+</ul>
+
+<h2>Permissions, and what they're for</h2>
+<table>
+  <tr><th>Permission</th><th>Purpose</th></tr>
+  <tr><td><code>USE_BIOMETRIC</code></td><td>Optional fingerprint unlock.
+      Fingerprint data is managed entirely by Android; the app never
+      sees or stores it.</td></tr>
+  <tr><td><code>POST_NOTIFICATIONS</code></td><td>Deliver the reminders
+      you schedule for tasks and habits.</td></tr>
+  <tr><td><code>RECEIVE_BOOT_COMPLETED</code></td><td>Re-register your
+      reminders after the device restarts.</td></tr>
+</table>
+<p>The app does <strong>not</strong> use the internet permission — it
+cannot send your data anywhere, by design.</p>
+<p>Photos and files are accessed only when you explicitly pick them
+(profile photo, backup restore, PDF report sharing) through Android's
+own picker or share sheet. Camera access is used only when you choose
+"Take photo" for your profile picture.</p>
+
+<h2>Data sharing</h2>
+<p>None. There is nothing to share — no data ever leaves your device
+except files <strong>you</strong> export yourself (backups, PDF
+reports) through the share targets <strong>you</strong> choose.</p>
+
+<h2>Your control over your data</h2>
+<ul>
+  <li><strong>Export</strong> — Settings → Backup → export creates an
+      encrypted backup file you keep</li>
+  <li><strong>Delete</strong> — Settings → Clear all data erases
+      everything on-device; uninstalling the app also removes all
+      data</li>
+  <li><strong>Backups you exported</strong> are under your control —
+      keep or delete the files as you like</li>
+</ul>
+
+<h2>Security</h2>
+<ul>
+  <li>Vault and backup data are encrypted with AES-256-GCM</li>
+  <li>Backup keys are derived from your passphrase with Argon2id</li>
+  <li>PINs are hashed with Argon2id and never stored in plain text</li>
+  <li>Vault keys live in Android's hardware-backed secure storage</li>
+</ul>
+
+<h2>Children's privacy</h2>
+<p>The app is not directed at children and collects no personal
+information from anyone, of any age.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy changes, the updated version will be posted at the
+same location and the "Last updated" date will change.</p>
+
+<h2>Contact</h2>
+<p>If you have questions about this policy, you can reach the
+developer through the contact email listed on the app's Play Store
+page.</p>
+</div>
+</body>
+</html>
