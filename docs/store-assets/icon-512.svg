@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- LifeHub store icon — 512x512, same mark as the launcher icon -->
+  <circle cx="256" cy="256" r="256" fill="#2633C5"/>
+  <g transform="translate(256,256) scale(3.4) translate(-54,-54)">
+    <path fill="#FFFFFF" d="M29,28h11v40h34v11H29z"/>
+    <path fill="#00B686" d="M81,28a6,6 0,1 1,-12 0a6,6 0,1 1,12 0M81,45a6,6 0,1 1,-12 0a6,6 0,1 1,12 0M81,62a6,6 0,1 1,-12 0a6,6 0,1 1,12 0"/>
+    <path fill="#FFFFFF" d="M42,31h27v5H42zM42,48h27v5H42zM42,65h27v5H42z"/>
+  </g>
+</svg>
