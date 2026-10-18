@@ -1,4 +1,4 @@
-package com.lifehub.app
+package com.lifehub.organizer
 
 import android.app.Activity
 import android.content.Intent
