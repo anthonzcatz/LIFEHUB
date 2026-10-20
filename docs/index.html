@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LifeHub — All-in-One Personal Organizer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232633C5'/%3E%3Ctext x='32' y='44' font-size='34' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'%3EL%3C/text%3E%3C/svg%3E">
+<meta name="description" content="LifeHub is an all-in-one personal organizer for Android — finance, tasks, notes, habits, and an encrypted vault. 100% offline and private.">
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --card: #fff;
+    --ink: #1f2933;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --brand: #2633c5;
+    --accent: #00b686;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101418;
+      --card: #1a1f26;
+      --ink: #e5e9ef;
+      --muted: #9aa3af;
+      --line: #2c333d;
+      --brand: #8c9eff;
+      --accent: #4ade80;
+    }
+  }
+  body {
+    font-family: -apple-system, Roboto, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    color: var(--ink);
+    background: var(--bg);
+    margin: 0;
+  }
+  .hero {
+    text-align: center;
+    padding: 64px 20px 40px;
+    background: linear-gradient(135deg, #2633c5, #1a2470);
+    color: #fff;
+  }
+  .hero .mark {
+    width: 96px;
+    height: 96px;
+    border-radius: 24px;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  .hero h1 { margin: 0 0 8px; font-size: 2.4rem; }
+  .hero p { margin: 0; color: #b8c5f0; font-size: 1.1rem; }
+  .hero .privacy-note {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(0,182,134,0.2);
+    color: #7ff0c8;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 48px;
+  }
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .feature {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .feature h3 { margin: 0 0 6px; font-size: 1rem; color: var(--brand); }
+  .feature p { margin: 0; font-size: 0.88rem; color: var(--muted); }
+  .links {
+    text-align: center;
+    margin-top: 36px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .links a {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    background: var(--card);
+  }
+  .links a.primary {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 24px 20px 40px;
+  }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="mark">
+    <svg width="64" height="64" viewBox="0 0 108 108">
+      <path fill="#2633C5" d="M29,28h11v40h34v11H29z"/>
+      <path fill="#00B686" d="M81,28a6,6 0,1 1,-12 0a6,6 0,1 1,12 0M81,45a6,6 0,1 1,-12 0a6,6 0,1 1,12 0M81,62a6,6 0,1 1,-12 0a6,6 0,1 1,12 0"/>
+      <path fill="#2633C5" d="M42,31h27v5H42zM42,48h27v5H42zM42,65h27v5H42z"/>
+    </svg>
+  </div>
+  <h1>LifeHub</h1>
+  <p>All-in-one personal organizer for Android</p>
+  <span class="privacy-note">100% offline — your data never leaves your device</span>
+</div>
+<main>
+  <div class="features">
+    <div class="feature">
+      <h3>Finance</h3>
+      <p>Track income &amp; expenses, monthly budgets, savings goals, and shareable PDF reports.</p>
+    </div>
+    <div class="feature">
+      <h3>Tasks &amp; reminders</h3>
+      <p>Priorities, due dates, and scheduled notifications — with undo for mistakes.</p>
+    </div>
+    <div class="feature">
+      <h3>Notes</h3>
+      <p>Quick notes with search and auto-save — nothing you type is ever lost.</p>
+    </div>
+    <div class="feature">
+      <h3>Habits</h3>
+      <p>Daily streaks and a completion calendar to build routines that stick.</p>
+    </div>
+    <div class="feature">
+      <h3>Encrypted vault</h3>
+      <p>AES-256-GCM passwords, fingerprint or PIN unlock, and auto-locking.</p>
+    </div>
+    <div class="feature">
+      <h3>Encrypted backups</h3>
+      <p>Passphrase-protected exports (Argon2id + AES-GCM) that only you can open.</p>
+    </div>
+  </div>
+  <div class="links">
+    <a class="primary" href="https://github.com/anthonzcatz/LIFEHUB">View source on GitHub</a>
+    <a href="privacy-policy.html">Privacy policy</a>
+  </div>
+</main>
+<footer>LifeHub — local-first personal organizer for Android</footer>
+</body>
+</html>
