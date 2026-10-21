@@ -68,7 +68,10 @@ class DrawerScreenState extends ConsumerState<DrawerScreen>
     // Responsive drawer width matching the original template: the drawer
     // occupies most of the screen while leaving the page visible behind it.
     final drawerWidth = (width * 0.78).clamp(280.0, 340.0);
-    final target = width * 0.72;
+    // On wide screens the scaled-down page should sit right beside the
+    // drawer instead of sliding 72% of the (huge) screen width, which
+    // left a big empty gap between drawer and page.
+    final target = width >= 700 ? drawerWidth + 16 : width * 0.72;
 
     return Scaffold(
       backgroundColor: const Color(0xFF111A52),
