@@ -115,6 +115,26 @@ class _HomeShellState extends State<HomeShell> {
               selectedIndex: _index,
               labelType: NavigationRailLabelType.all,
               onDestinationSelected: (index) => setState(() => _index = index),
+              trailing: Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: FloatingActionButton(
+                      onPressed: _quickAdd,
+                      tooltip: 'Quick add',
+                      backgroundColor: LifeHubTheme.nearlyDarkBlue,
+                      elevation: 6,
+                      shape: const CircleBorder(),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               destinations: const [
                 NavigationRailDestination(
                   icon: Icon(Icons.dashboard_outlined),
@@ -162,16 +182,18 @@ class _HomeShellState extends State<HomeShell> {
       ),
       // Single floating + in the center of a flat bottom bar —
       // like the original template (only the button floats, not the bar).
-      floatingActionButton: FloatingActionButton(
-        onPressed: _quickAdd,
-        backgroundColor: LifeHubTheme.nearlyDarkBlue,
-        elevation: 6,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
-      floatingActionButtonLocation: wide
-          ? FloatingActionButtonLocation.endFloat
-          : FloatingActionButtonLocation.centerDocked,
+      // On wide layouts the + moves into the NavigationRail instead,
+      // so it never collides with each screen's own add button.
+      floatingActionButton: wide
+          ? null
+          : FloatingActionButton(
+              onPressed: _quickAdd,
+              backgroundColor: LifeHubTheme.nearlyDarkBlue,
+              elevation: 6,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: wide
           ? null
           : BottomAppBar(
